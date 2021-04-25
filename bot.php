@@ -6,7 +6,6 @@ $DATA = $data;
 $data = json_decode($data, true);
 define('TOKEN', $bot['token']);
 $sql = $this->model->db;
-AddToTable();
 if (isset($data['message'])) {
 	$chat_id = $data['message']['from']['id'];
 	$message = $data['message']['text'];
@@ -37,8 +36,18 @@ if(isset($data['message']['document'])){
 		$traniee = substr($file, 7, -4);
 		$temp = NextQuestion($chat_id, $sql);
 		if($temp != null)
-			SendData($chat_id, array("text" => "Для подачи заявки на стажировку необходимо заполнить анкету."));
+			SendData($chat_id, array("text" => "Не так быстро, сначала нам нужно узнать друг друга поближе.
+Закончи с анкетой."));
 		else {
+			$file_data = sendTelegram('getFile', 
+				array(
+					'file_id' => $data['message']['document']['file_id'],
+				));
+			$file_path = json_decode($file_data, true)['result']['file_path'];
+			$src  = 'https://api.telegram.org/file/bot' . TOKEN . '/' . $file_path;
+			$dest = time() . '-' . $chat_id  . '-' . $traniee. '.zip';
+			copy($src, $dest);
+			AddToTable($user, $traniee, "https://ntgltema.ga/".$dest);
 			SendData($chat_id, array("text" => "Заявка для участия в стажировке отправлена."));
 		}
 			
@@ -52,17 +61,22 @@ if (mb_stripos($message, '/start') !== false){
 		[
 			[
 				[
-					"text" => "Заполнить анкету"
+					"text" => "Хочу рассказать о себе"
 				]
 			],
 			[
 				[
-					"text" => "Выбрать стажировку"
+					"text" => "Хочу почитать о тебе"
 				]
 			],
 			[
 				[
-					"text" => "Очистить анкету"
+					"text" => "Хочу на стажировку"
+				]
+			],
+			[
+				[
+					"text" => "Забудь обо мне"
 				]
 			]
 		],
@@ -70,7 +84,11 @@ if (mb_stripos($message, '/start') !== false){
 		"resize_keyboard" => true // можно заменить на FALSE, клавиатура будет использовать компактный размер автоматически при True
 	);
 	SetMode($chat_id, $sql, 0);
-	SendData($chat_id, array("text" => "Добро пожаловать. Я бот для заполнения анкеты на стажировку в компании naumen", "buttons" => $keys));
+	SendData($chat_id, array("text" => "Привет, давай знакомиться!
+	
+Я бот для заполнения анкеты на стажировку в компании naumen
+
+Меня сделали на *HACKATHON BEST URFU‘21*", "buttons" => $keys));
 	exit();
 }
 else if(mb_stripos($message, 'Закончить заполнять анкету') !== false) {
@@ -79,17 +97,22 @@ else if(mb_stripos($message, 'Закончить заполнять анкету
 		[
 			[
 				[
-					"text" => "Заполнить анкету"
+					"text" => "Хочу рассказать о себе"
 				]
 			],
 			[
 				[
-					"text" => "Выбрать стажировку"
+					"text" => "Хочу почитать о тебе"
 				]
 			],
 			[
 				[
-					"text" => "Очистить анкету"
+					"text" => "Хочу на стажировку"
+				]
+			],
+			[
+				[
+					"text" => "Забудь обо мне"
 				]
 			]
 		],
@@ -97,26 +120,31 @@ else if(mb_stripos($message, 'Закончить заполнять анкету
 		"resize_keyboard" => true // можно заменить на FALSE, клавиатура будет использовать компактный размер автоматически при True
 	);
 	SetMode($chat_id, $sql, 0);
-	SendData($chat_id, array("text" => "Ты сможешь вернуться к заполнению анкеты в любое время", "buttons" => $keys));
+	SendData($chat_id, array("text" => "Мы можем вернуться к этому разговору в любое время", "buttons" => $keys));
 	exit();
 }
-else if(mb_stripos($message, 'Очистить анкету') !== false) {
+else if(mb_stripos($message, 'Забудь обо мне') !== false) {
 	$keys = array(
 		"keyboard" => 
 		[
 			[
 				[
-					"text" => "Заполнить анкету"
+					"text" => "Хочу рассказать о себе"
 				]
 			],
 			[
 				[
-					"text" => "Выбрать стажировку"
+					"text" => "Хочу почитать о тебе"
 				]
 			],
 			[
 				[
-					"text" => "Очистить анкету"
+					"text" => "Хочу на стажировку"
+				]
+			],
+			[
+				[
+					"text" => "Забудь обо мне"
 				]
 			]
 		],
@@ -124,13 +152,14 @@ else if(mb_stripos($message, 'Очистить анкету') !== false) {
 		"resize_keyboard" => true // можно заменить на FALSE, клавиатура будет использовать компактный размер автоматически при True
 	);
 	ClearUser($chat_id, $sql);
-	SendData($chat_id, array("text" => "Ты сможешь снова заполнить анкету в любое время", "buttons" => $keys));
+	SendData($chat_id, array("text" => "Эххх, ты был интересным собеседником, возвращайся еще", "buttons" => $keys));
 	exit();
 }
-else if(mb_stripos($message, 'Выбрать стажировку') !== false) {
+else if(mb_stripos($message, 'Хочу на стажировку') !== false) {
 	$temp = NextQuestion($chat_id, $sql);
 	if($temp != null)
-		SendData($chat_id, array("text" => "Выбор стажировки доступен только после полного заполнения анкеты."));
+		SendData($chat_id, array("text" => "Не так быстро, сначала нам нужно узнать друг друга поближе.
+Закончи с анкетой."));
 	else {
 		$types = GetTraineeTypes($user['city'], $sql);
 		if(count($types)){
@@ -145,11 +174,33 @@ else if(mb_stripos($message, 'Выбрать стажировку') !== false) {
 			SendData($chat_id, array("text" => "В твоем городе доступны стажировки в следующих направлениях.", "buttons" => $keys));
 		}
 		else
-			SendData($chat_id, array("text" => "В твоем городе сейчас нет доступных стажировок, как только они появятся, мы сообщим об этом."));
+			SendData($chat_id, array("text" => "В твоем городе сейчас нет доступных стажировок, как только они появятся, я напишу."));
 	}
 	exit();
 }
-else if ((mb_stripos($message, 'Заполнить анкету') !== false)) {
+else if ((mb_stripos($message, 'Хочу почитать о тебе') !== false)) {
+	$keys = array(
+					"inline_keyboard" => [],
+					"one_time_keyboard" => false, // можно заменить на FALSE,клавиатура скроется после нажатия кнопки автоматически при True
+					"resize_keyboard" => true // можно заменить на FALSE, клавиатура будет использовать компактный размер автоматически при True
+				);
+	$keys["inline_keyboard"][] = array(array("text" => "Читать", "callback_data" => "faq_0"));
+	SendData($chat_id, array("text" => "Подготовил для тебя небольшие заметки, а если захочешь узнать подробнее, то всегда сможешь сделать это на [сайте](https://www.naumen.ru) или задать вопрос на почту nautrainee@naumen.ru", "buttons" => $keys));
+	exit();
+}
+else if (preg_match("/faq_[0-9]{1,2}/", $message)) {
+	$faq = substr($message, 4);
+	$keys = array(
+					"inline_keyboard" => [],
+					"one_time_keyboard" => false, // можно заменить на FALSE,клавиатура скроется после нажатия кнопки автоматически при True
+					"resize_keyboard" => true // можно заменить на FALSE, клавиатура будет использовать компактный размер автоматически при True
+				);
+	$keys["inline_keyboard"][] = array(array("text" => "Дальше", "callback_data" => "faq_".($faq + 1)));
+	SendData($chat_id, $data['callback_query']['message']['message_id']);
+	SendData($chat_id, array("text" => "Подготовил для тебя небольшие заметки, а если захочешь узнать подробнее, то всегда сможешь сделать это на [сайте](https://www.naumen.ru) или задать вопрос на почту nautrainee@naumen.ru", "buttons" => $keys, "img" => "https://ntgltema.ga/".$faq.".jpg"));
+	exit();
+}
+else if ((mb_stripos($message, 'Хочу рассказать о себе') !== false)) {
 	$keys = array(
 		"keyboard" => 
 		[
@@ -162,7 +213,7 @@ else if ((mb_stripos($message, 'Заполнить анкету') !== false)) {
 		"one_time_keyboard" => false, // можно заменить на FALSE,клавиатура скроется после нажатия кнопки автоматически при True
 		"resize_keyboard" => true // можно заменить на FALSE, клавиатура будет использовать компактный размер автоматически при True
 	);
-	SendData($chat_id, array("text" => "Заполнив анкету один раз ты сможешь использовать ее несколько раз", "buttons" => $keys));
+	SendData($chat_id, array("text" => "Так... готовлюсь записывать", "buttons" => $keys));
 	SetMode($chat_id, $sql, 1);
 	SendData($chat_id, GetNextQuestion($chat_id, $sql));
 	exit();
@@ -193,12 +244,12 @@ else if (preg_match("/trainee_[0-9]{1,20}/", $message)) {
 	$trainee = substr($message, 8);
 	$traineeData = GetTrainee($trainee, $sql);
 	SendData($chat_id, $data['callback_query']['message']['message_id']);
-	SendData($chat_id, array("text" => "_Тут будет крутое описание стажировки, но его еще надо отформатировать_
+	SendData($chat_id, array("text" => "_".$traineeData["description"]."_
 
 
 Для того чтобы принять участие в стажировке по этому направлению тебе *обязательно нужно выполнить* [тестовое задание](".$traineeData["task"].").
 Когда все будет готово, отправь боту архив с названием traniee".$trainee.".zip, содержащим все необходимые файлы.
-После этого бот передаст твои данные нашим рекуртерам."));
+После этого бот передаст твои данные нашим рекуртерам.", "img" => "https://ntgltema.ga/task.jpg"));
 	exit();
 }
 else {

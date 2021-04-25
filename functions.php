@@ -142,7 +142,7 @@ putenv('GOOGLE_APPLICATION_CREDENTIALS=' . __DIR__ . '/naumen.json');
 		), true);
 	}
 	
-	function AddToTable() {
+	function AddToTable($user, $traniee, $task) {
 		$client = new Google_Client;
 			try{
 				$client->useApplicationDefaultCredentials();
@@ -163,18 +163,15 @@ putenv('GOOGLE_APPLICATION_CREDENTIALS=' . __DIR__ . '/naumen.json');
 
 				// Get the first worksheet (tab)
 				$worksheets = $spreadsheet->getWorksheetFeed()->getEntries();
-				$worksheet = $worksheets[0];
+				$worksheet = $worksheets[$traniee];
 
-
+				$dataArray = array('date' => date_create('now')->format('Y-m-d H:i:s'), 'task' => $task);
+				foreach($user as $key => $value){
+					$dataArray[strtolower($key)] = "'".$value;
+				}
+				
 				$listFeed = $worksheet->getListFeed();
-				$listFeed->insert([
-					'name' => "'". 'Igor',
-					'phone' => "'". '2425-245-224545',
-					'surname' => "'". 'Orlov',
-					'city' => "'". 'Berlin',
-					'age' => "'". '35',
-					'date' => date_create('now')->format('Y-m-d H:i:s')
-				]);
+				$listFeed->insert($dataArray);
 
 			}catch(Exception $e){
 			  file_put_contents("naumen.txt", $e->getMessage() . ' ' . $e->getLine() . ' ' . $e->getFile() . ' ' . $e->getCode);
